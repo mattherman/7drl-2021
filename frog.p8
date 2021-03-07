@@ -1,30 +1,32 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
+--frogs
+--by carnivaltears
 function _init()
-	map_end=32*8
-	create_map(32,32)
+	map_size=64
+	tile_size=8
+	map_end=map_size*tile_size
+	create_map(map_size)
 	create_player(0,0)
 	cam_x=0
 	cam_y=0
+	turn=0
 end
 
 function _update()
-	update_player()
-	cam_x=p.x-64+4
-	cam_y=p.y-64+4
-	if cam_x<0 then
-		cam_x=0
+	if btnp()!=0 then
+		update_player()
+		update_camera()
+		turn+=1
 	end
-	if cam_x>map_end-128 then
-		cam_x=map_end-128
-	end
-	if cam_y<0 then
-		cam_y=0
-	end
-	if cam_y>map_end-128 then
-		cam_y=map_end-128
-	end
+end
+
+function update_camera()
+	cam_x=(p.x*tile_size)-64+(tile_size/2)
+	cam_y=(p.y*tile_size)-64+(tile_size/2)
+	cam_x=mid(0,cam_x,map_end-128)
+	cam_y=mid(0,cam_y,map_end-128)
 	camera(cam_x,cam_y)
 end
 
@@ -32,8 +34,10 @@ function _draw()
  cls()
 	draw_map()
 	draw_player()
+	print(turn,cam_x,cam_y)
 end
 -->8
+--player
 function create_player(x,y)
 	p={}
 	p.x=x
@@ -45,53 +49,67 @@ end
 
 function update_player()
 	if btnp(⬆️) then
-		p.y-=8
+		p.y-=1
 		p.dir=1
 	elseif btnp(➡️) then
-		p.x+=8
+		p.x+=1
 		p.dir=2
 	elseif btnp(⬇️) then
-		p.y+=8
+		p.y+=1
 		p.dir=3
 	elseif btnp(⬅️) then
-		p.x-=8
+		p.x-=1
 		p.dir=4
 	end
+	p.x=mid(0,p.x,map_size-1)
+	p.y=mid(0,p.y,map_size-1)
 end
 
 function draw_player()
+	local x=p.x*tile_size
+	local y=p.y*tile_size
 	if p.dir==1 then
-		spr(p.v_spr,p.x,p.y)
+		spr(p.v_spr,x,y)
 	elseif p.dir==2 then
-		spr(p.h_spr,p.x,p.y)
+		spr(p.h_spr,x,y)
 	elseif p.dir==3 then
-		spr(p.v_spr,p.x,p.y,1,1,false,true)
+		spr(p.v_spr,x,y,1,1,false,true)
 	else
-		spr(p.h_spr,p.x,p.y,1,1,true,false)
+		spr(p.h_spr,x,y,1,1,true,false)
 	end
 end
 -->8
-function create_map(width, height)
+--map
+function create_map(size)
 	m={}
-	for x=0,width-1 do
+	for x=0,size-1 do
 		m[x]={}
-		for y=0,height-1 do
-			if flr(rnd(4))==0 then
-				m[x][y]={t="water",s=1}	
+		for y=0,size-1 do
+			local terrain=flr(rnd(4))
+			if terrain==0 then
+				m[x][y]={t="land",s=20}
+			elseif terrain==1 then
+				m[x][y]={t="land",s=21}
 			else
-				m[x][y]={t="water",s=17}
+				m[x][y]={t="land",s=22}
 			end
 		end
 	end
 	
-	for i=0,(width/2) do
-		generate_lily(width-1,height-1)
+	generate_lakes()
+	
+	for i=0,(size/2) do
+		generate_lily()
 	end
 end
 
-function generate_lily(x_bound,y_bound)
-	local x=flr(rnd(x_bound))
-	local y=flr(rnd(y_bound))
+function generate_lakes()
+	
+end
+
+function generate_lily()
+	local x=flr(rnd(#m))
+	local y=flr(rnd(#m))
 	if m[x][y].t=="water" and
 				m[x+1][y].t=="water" and
 				m[x][y+1].t=="water" and
@@ -119,11 +137,11 @@ __gfx__
 00700700cccc7c7cccbbbbbbb3cccccc0333333000333b3100000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000ccc7c7ccc3bbbbbb3ccccccc030000303330030000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000ccccccccc3bbbbbbbbbbbbbc030000300000003000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000ccccccccc3bbbbbbbbbbbbbc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000ccccccccc3bbbbbbbbbbbbbc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000cccccccccc3bbbbbbbbbbbcc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000cccccccccc3bbbbbbbbbbbcc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000ccccccccccc33bbbbbbbbccc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000ccccccccccccc333333ccccc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000cccccccccccccccccccccccc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000cccccccccccccccccccccccc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000ccccccccc3bbbbbbbbbbbbbc555555555555556555555555000000000000000000000000000000000000000000000000000000000000000000000000
+00000000ccccccccc3bbbbbbbbbbbbbc55555b5b5555555555555555000000000000000000000000000000000000000000000000000000000000000000000000
+00000000cccccccccc3bbbbbbbbbbbcc555555b55556555555555555000000000000000000000000000000000000000000000000000000000000000000000000
+00000000cccccccccc3bbbbbbbbbbbcc55b555b55555565555555555000000000000000000000000000000000000000000000000000000000000000000000000
+00000000ccccccccccc33bbbbbbbbcccb5b555555555555555555555000000000000000000000000000000000000000000000000000000000000000000000000
+00000000ccccccccccccc333333ccccc5b55b5555655555555555555000000000000000000000000000000000000000000000000000000000000000000000000
+00000000cccccccccccccccccccccccc5b555b555555655555555555000000000000000000000000000000000000000000000000000000000000000000000000
+00000000cccccccccccccccccccccccc55555b555555555555555555000000000000000000000000000000000000000000000000000000000000000000000000
